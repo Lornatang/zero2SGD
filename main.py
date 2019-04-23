@@ -14,20 +14,19 @@ beta = [1, 1]
 lr = 0.0001
 tol_L = 0.01
 
-# 对x进行归一化
+# normalizes x
 max_x = max(train['id'])
 x = train['id'] / max_x
 y = train['questions']
 
 
-# 进行第一次计算
+# let's do the first calculation
 np.random.seed(10)
 grad = compute_grad(beta, x, y)
 loss = rmse(beta, x, y)
 beta = update_beta(beta, lr, grad)
 loss_new = rmse(beta, x, y)
 
-# 开始迭代
 i = 1
 while np.abs(loss_new - loss) > tol_L:
   beta = update_beta(beta, lr, grad)
