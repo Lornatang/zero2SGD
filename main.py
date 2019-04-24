@@ -10,8 +10,8 @@ test = pd.read_csv('data/test.csv')
 submit = pd.read_csv('data/sample_submit.csv')
 
 # initial setup params
-beta = [0.5, 0.9]
-lr = 0.0001
+beta = [1, 1]
+lr = 0.2
 tol_L = 0.1
 
 # normalizes x
