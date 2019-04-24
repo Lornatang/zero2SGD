@@ -4,7 +4,7 @@
 import numpy as np
 
 
-def compute_grad(beta, x, y):
+def compute_grad_sgd(beta, x, y):
   """define a function that computes the gradient
   Parameters
   ------------
@@ -39,7 +39,7 @@ def update_beta(beta, lr, grad):
   return np.array(beta) - lr * grad
 
 
-def rmse(beta, x, y):
+def loss(beta, x, y):
   """define the function to calculate SGD loss
   Parameters
   -------------
