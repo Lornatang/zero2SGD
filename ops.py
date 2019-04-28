@@ -1,4 +1,4 @@
-"""Implement some basic operations of Adam.
+"""Implement some basic operations of SGD.
 """
 
 ####################################################
@@ -10,7 +10,7 @@ from activation import *
 
 
 def random_mini_batches(data, label, mini_batch_size, seed=10):
-  """ creates a list of random minibatches from (data, label)
+  """ creates a list of random mini batches from (data, label)
   Paras
   -----------------------------------
   data:            input data, of shape (input size, number of examples)
@@ -31,9 +31,9 @@ def random_mini_batches(data, label, mini_batch_size, seed=10):
   shuffled_Y = label[:, permutation].reshape((1, m))
 
   # Step 2: Partition (shuffled_X, shuffled_Y). Minus the end case.
-  # number of mini batches of size mini_batch_size in your partitionning
-  num_complete_minibatches = m // mini_batch_size
-  for k in range(0, num_complete_minibatches):
+  # number of mini batches of size mini_batch_size in your partitioning
+  num_complete_mini_batches = m // mini_batch_size
+  for k in range(0, num_complete_mini_batches):
     mini_batch_X = shuffled_X[:, k * mini_batch_size: (k + 1) * mini_batch_size]
     mini_batch_Y = shuffled_Y[:, k * mini_batch_size: (k + 1) * mini_batch_size]
     mini_batch = (mini_batch_X, mini_batch_Y)
@@ -41,8 +41,8 @@ def random_mini_batches(data, label, mini_batch_size, seed=10):
 
   # Handling the end case (last mini-batch < mini_batch_size)
   if m % mini_batch_size != 0:
-    mini_batch_X = shuffled_X[:, num_complete_minibatches * mini_batch_size: m]
-    mini_batch_Y = shuffled_Y[:, num_complete_minibatches * mini_batch_size: m]
+    mini_batch_X = shuffled_X[:, num_complete_mini_batches * mini_batch_size: m]
+    mini_batch_Y = shuffled_Y[:, num_complete_mini_batches * mini_batch_size: m]
     mini_batch = (mini_batch_X, mini_batch_Y)
     mini_batches.append(mini_batch)
 
