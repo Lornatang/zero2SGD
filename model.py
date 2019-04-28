@@ -14,10 +14,7 @@ def model(data,
           layer_dims,
           learning_rate,
           num_iterations,
-          beta1=0.9,
-          beta2=0.999,
-          mini_batch_size=64,
-          epsilon=1e-8):
+          mini_batch_size=64):
   """ define basic model
   Paras
   -----------------------------------
@@ -26,10 +23,7 @@ def model(data,
   layer_dims:      list containing the input size and each layer size
   learning_rate:   the learning rate, scalar
   num_iterations:  number of iterative training
-  beta1:           Exponential decay hyperparameter for the first moment estimates
-  beta2:           Exponential decay hyperparameter for the second moment estimates
   mini_batch_size: size of the mini-batches, integer
-  epsilon:         hyperparameter preventing division by zero in Adam updates
 
   Returns:
   -----------------------------------
@@ -38,8 +32,6 @@ def model(data,
   costs = []
   # initialize parameters
   parameters = init_parameters(layer_dims)
-  v, s = initialize_adam(parameters)
-  t = 0  # initializing the counter required for Adam update
   seed = 0
   for i in range(0, num_iterations):
     # Define the random minibatches. We increment the seed to reshuffle differently the dataset after each epoch
@@ -54,8 +46,7 @@ def model(data,
       loss = compute_cost(AL, mini_batch_Y)
       # Backward propagation
       grads = backward_propagation(AL, mini_batch_Y, caches)
-      t += 1
-      parameters = update_parameters_with_adam(parameters, grads, v, s, t, learning_rate, beta1, beta2, epsilon)
+      parameters = update_parameters_with_sgd(parameters, grads, learning_rate)
 
       print(f"Iter {i} loss {loss:.6f}")
       costs.append(loss)
@@ -94,11 +85,7 @@ def dnn(X_train,
         y_test,
         layer_dims,
         learning_rate=0.0005,
-        num_iterations=10000,
-        beta1=0.9,
-        beta2=0.999,
-        mini_batch_size=64,
-        epsilon=1e-8):
+        num_iterations=10000):
   """DNN model
    Paras
   -----------------------------------
@@ -122,11 +109,7 @@ def dnn(X_train,
                      y_train,
                      layer_dims,
                      learning_rate,
-                     num_iterations,
-                     beta1,
-                     beta2,
-                     mini_batch_size,
-                     epsilon)
+                     num_iterations)
   accuracy = predict(X_test, y_test, parameters)
 
   return accuracy
