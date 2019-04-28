@@ -41,7 +41,7 @@ def model(data,
       # Forward propagation
       AL, caches = forward_propagation(mini_batch_X, parameters)
       # Compute cost
-      loss = compute_cost(AL, mini_batch_Y)
+      loss = compute_loss(AL, mini_batch_Y)
       # Backward propagation
       grads = backward_propagation(AL, mini_batch_Y, caches)
       parameters = update_parameters_with_sgd(parameters, grads, learning_rate)
