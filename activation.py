@@ -92,4 +92,3 @@ def tanh_backward(x):
   favl = tanh(x)
 
   return 1 - favl ** 2
-
