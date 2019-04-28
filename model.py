@@ -32,12 +32,10 @@ def model(data,
   costs = []
   # initialize parameters
   parameters = init_parameters(layer_dims)
-  seed = 0
   for i in range(0, num_iterations):
-    # Define the random minibatches. We increment the seed to reshuffle differently the dataset after each epoch
-    seed = seed + 1
-    minibatches = random_mini_batches(data, label, mini_batch_size, seed)
-    for mini_batch in minibatches:
+    # Define the random mini batches. We increment the seed to reshuffle differently the dataset after each epoch
+    mini_batches = random_mini_batches(data, label, mini_batch_size, seed=10)
+    for mini_batch in mini_batches:
       # Select a mini_batch
       (mini_batch_X, mini_batch_Y) = mini_batch
       # Forward propagation
