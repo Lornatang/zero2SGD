@@ -21,6 +21,13 @@ y_train = y_train.reshape(y_train.shape[0], -1).T
 X_test = X_test.T
 y_test = y_test.reshape(y_test.shape[0], -1).T
 
-accuracy = dnn(X_train, y_train, X_test, y_test, [X_train.shape[0], 10, 5, 1], learning_rate=1e-3, num_iterations=10000)
+accuracy = dnn(X_train,
+               y_train,
+               X_test,
+               y_test,
+               layer_dims=[X_train.shape[0], 10, 5, 1],
+               learning_rate=1e-5,
+               num_iterations=10000,
+               mini_batch_size=64)
 
 print(f"Acc: {accuracy}")
