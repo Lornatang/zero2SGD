@@ -37,12 +37,59 @@ def relu_backward(x):
 
 
 def sigmoid(x):
-  """implement the activation function sigmoid
+  """ implement the activation function sigmoid
   Paras
   -----------------------------------
   x: Output of the linear layer
+
   Returns
   -----------------------------------
-  """
+  max of nums"""
 
   return 1 / (1 + np.exp(-x))
+
+
+def sigmoid_backward(x):
+  """ derivation of sigmoid
+  Paras
+  -----------------------------------
+  x: output of the linear layer
+
+  Returns
+  -----------------------------------
+  max of nums
+  """
+
+  fval = sigmoid(x)
+
+  return fval * (1 - fval)
+
+
+def tanh(x):
+  """ implement the activation function tanh
+  Paras
+  -----------------------------------
+  x: output of the linear layer
+
+  Returns
+  -----------------------------------
+  max of nums
+  """
+
+  return (1 - np.exp(2 * -x)) / (1 + np.exp(2 * -x))
+
+
+def tanh_backward(x):
+  """derivation of tanh
+  Paras
+  -----------------------------------
+  x: output of the linear layer
+
+  Returns
+  -----------------------------------
+  max of nums
+  """
+  favl = tanh(x)
+
+  return 1 - favl ** 2
+
