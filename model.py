@@ -14,7 +14,7 @@ def model(data,
           layer_dims,
           learning_rate,
           num_iterations,
-          mini_batch_size=64):
+          mini_batch_size):
   """ define basic model
   Paras
   -----------------------------------
@@ -65,7 +65,7 @@ def predict(data, label, parameters):
   accuracy:        the correct value of the prediction
   """
   pred = np.zeros((1, label.shape[1]))
-  prob, caches = forward_propagation(data, parameters)
+  prob, _ = forward_propagation(data, parameters)
   for i in range(prob.shape[1]):
     # Convert probabilities A[0,i] to actual predictions p[0,i]
     if prob[0, i] > 0.5:
@@ -82,8 +82,9 @@ def dnn(X_train,
         X_test,
         y_test,
         layer_dims,
-        learning_rate=0.0005,
-        num_iterations=10000):
+        learning_rate,
+        num_iterations,
+        mini_batch_size):
   """DNN model
    Paras
   -----------------------------------
@@ -94,10 +95,7 @@ def dnn(X_train,
   layer_dims:      list containing the input size and each layer size
   learning_rate:   the learning rate, scalar
   num_iterations:  number of iterative training
-  beta1:           exponential decay hyperparameter for the first moment estimates
-  beta2:           exponential decay hyperparameter for the second moment estimates
   mini_batch_size: size of the mini-batches, integer
-  epsilon:         hyperparameter preventing division by zero in Adam updates
 
   Returns
   -----------------------------------
@@ -107,7 +105,8 @@ def dnn(X_train,
                      y_train,
                      layer_dims,
                      learning_rate,
-                     num_iterations)
+                     num_iterations,
+                     mini_batch_size)
   accuracy = predict(X_test, y_test, parameters)
 
   return accuracy
