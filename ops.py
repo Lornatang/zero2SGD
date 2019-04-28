@@ -149,8 +149,8 @@ def backward_propagation(data, label, caches):
   return gradients
 
 
-def compute_cost(pred, label):
-  """calculate cost function
+def compute_loss(pred, label):
+  """calculate loss function
   Paras
   ------------------------------------
   pred:  pred "label" vector (containing 0 if cat, 1 if non-cat)
