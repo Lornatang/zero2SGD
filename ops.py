@@ -90,11 +90,9 @@ def forward_propagation(x, parameters):
   caches = [(None, None, None, x)]
   # calculate from 1 to L-1 layer
   for l in range(1, L):
-    A_pre = A
-
     W = parameters["W" + str(l)]
     b = parameters["b" + str(l)]
-    z = np.dot(W, A_pre) + b  # cal z = wx + b
+    z = np.dot(W, A) + b  # cal z = wx + b
 
     A = relu(z)  # relu activation function
 
