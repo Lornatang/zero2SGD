@@ -61,7 +61,7 @@ def init_paras(layer_dims):
   L = len(layer_dims)
   paras = {}
   for l in range(1, L):
-    paras["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 0.1
+    paras["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1])
     paras["b" + str(l)] = np.zeros((layer_dims[l], 1))
 
   return paras
@@ -83,24 +83,24 @@ def forward_propagation(x, paras):
   caches:     list, every element is a tuple:(W,b,z,A_pre)
   """
   L = len(paras) // 2  # number of layer
-  A = x
+  # A = x
   caches = []
   # calculate from 1 to L-1 layer
   for l in range(1, L):
-    W = paras["W" + str(l)]
+    w = paras["W" + str(l)]
     b = paras["b" + str(l)]
 
     # linear forward -> relu forward ->linear forward....
-    z = linear(A, W, b)
-    caches.append((A, W, b, z))
-    A = relu(z)
+    z = linear(x, w, b)
+    caches.append((x, w, b, z))
+    x = relu(z)
 
   # calculate Lth layer
-  W = paras["W" + str(L)]
+  w = paras["W" + str(L)]
   b = paras["b" + str(L)]
 
-  z = linear(A, W, b)
-  caches.append((A, W, b, z))
+  z = linear(x, w, b)
+  caches.append((x, w, b, z))
   y = sigmoid(z)
 
   return y, caches

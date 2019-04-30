@@ -26,7 +26,7 @@ accuracy = dnn(X_train,
                y_test,
                layer_dims=[X_train.shape[0], 10, 5, 1],
                learning_rate=1e-4,
-               num_iterations=10000,
+               num_iterations=200000,
                batch_size=64)
 
 print(f"Acc: {accuracy}")

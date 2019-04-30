@@ -70,7 +70,7 @@ def relu_backward(x):
   max of nums
   """
 
-  return np.multiply(1.0, np.int64(x > 0))
+  return np.multiply(1., np.int64(x > 0))
 
 
 def sigmoid(x):
