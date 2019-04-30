@@ -9,7 +9,7 @@
 from activation import *
 
 
-def random_mini_batches(data, label, mini_batch_size, seed=10):
+def random_mini_batches(data, label, batch_size):
   """ creates a list of random mini batches from (data, label)
   Paras
   -----------------------------------
@@ -19,11 +19,10 @@ def random_mini_batches(data, label, mini_batch_size, seed=10):
 
   Returns
   -----------------------------------
-  mini_batches:    list of synchronous (mini_batch_X, mini_batch_Y)
+  batches:    list of synchronous (mini_batch_X, mini_batch_Y)
   """
-  np.random.seed(seed)
   m = data.shape[1]  # number of training examples
-  mini_batches = []
+  batches = []
 
   # Step 1: Shuffle (data, label)
   permutation = list(np.random.permutation(m))
@@ -32,24 +31,24 @@ def random_mini_batches(data, label, mini_batch_size, seed=10):
 
   # Step 2: Partition (shuffled_X, shuffled_Y). Minus the end case.
   # number of mini batches of size mini_batch_size in your partitioning
-  num_complete_mini_batches = m // mini_batch_size
-  for k in range(0, num_complete_mini_batches):
-    mini_batch_X = shuffled_X[:, k * mini_batch_size: (k + 1) * mini_batch_size]
-    mini_batch_Y = shuffled_Y[:, k * mini_batch_size: (k + 1) * mini_batch_size]
+  num_batches = m // batch_size
+  for k in range(0, num_batches):
+    mini_batch_X = shuffled_X[:, k * batch_size: (k + 1) * batch_size]
+    mini_batch_Y = shuffled_Y[:, k * batch_size: (k + 1) * batch_size]
     mini_batch = (mini_batch_X, mini_batch_Y)
-    mini_batches.append(mini_batch)
+    batches.append(mini_batch)
 
   # Handling the end case (last mini-batch < mini_batch_size)
-  if m % mini_batch_size != 0:
-    mini_batch_X = shuffled_X[:, num_complete_mini_batches * mini_batch_size: m]
-    mini_batch_Y = shuffled_Y[:, num_complete_mini_batches * mini_batch_size: m]
+  if m % batch_size != 0:
+    mini_batch_X = shuffled_X[:, num_batches * batch_size: m]
+    mini_batch_Y = shuffled_Y[:, num_batches * batch_size: m]
     mini_batch = (mini_batch_X, mini_batch_Y)
-    mini_batches.append(mini_batch)
+    batches.append(mini_batch)
 
-  return mini_batches
+  return batches
 
 
-def init_parameters(layer_dims):
+def init_paras(layer_dims):
   """ initial paras ops
   Paras
   -----------------------------------
@@ -59,18 +58,16 @@ def init_parameters(layer_dims):
   -----------------------------------
   dictionary: storage parameters w1,w2...wL, b1,...bL
   """
-  np.random.seed(10)
   L = len(layer_dims)
   paras = {}
   for l in range(1, L):
-    paras["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l - 1]) * np.sqrt(
-      2 / layer_dims[l - 1])  # he initialization
-
+    paras["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1]) * 0.1
     paras["b" + str(l)] = np.zeros((layer_dims[l], 1))
+
   return paras
 
 
-def forward_propagation(x, parameters):
+def forward_propagation(x, paras):
   """ forward propagation function
   Paras
   ------------------------------------
@@ -85,35 +82,35 @@ def forward_propagation(x, parameters):
   y:          the output of the last Layer(y_predict)
   caches:     list, every element is a tuple:(W,b,z,A_pre)
   """
-  L = len(parameters) // 2  # number of layer
+  L = len(paras) // 2  # number of layer
   A = x
-  caches = [(None, None, None, x)]
+  caches = []
   # calculate from 1 to L-1 layer
   for l in range(1, L):
-    W = parameters["W" + str(l)]
-    b = parameters["b" + str(l)]
-    z = np.dot(W, A) + b  # cal z = wx + b
+    W = paras["W" + str(l)]
+    b = paras["b" + str(l)]
 
-    A = relu(z)  # relu activation function
-
-    caches.append((W, b, z, A))
+    # linear forward -> relu forward ->linear forward....
+    z = linear(A, W, b)
+    caches.append((A, W, b, z))
+    A = relu(z)
 
   # calculate Lth layer
-  W = parameters["W" + str(L)]
-  b = parameters["b" + str(L)]
-  z = np.dot(W, A) + b
+  W = paras["W" + str(L)]
+  b = paras["b" + str(L)]
 
+  z = linear(A, W, b)
+  caches.append((A, W, b, z))
   y = sigmoid(z)
-  caches.append((W, b, z, y))
 
   return y, caches
 
 
-def backward_propagation(data, label, caches):
+def backward_propagation(pred, label, caches):
   """ implement the backward propagation presented.
   Paras
   ------------------------------------
-  data:   input dataset, of shape (input size, number of examples)
+  pred:   pred "label" vector (containing 0 if cat, 1 if non-cat)
   label:  true "label" vector (containing 0 if cat, 1 if non-cat)
   caches: caches output from forward_propagation(),(W,b,z,pre_A)
 
@@ -123,27 +120,25 @@ def backward_propagation(data, label, caches):
   """
   m = label.shape[1]
   L = len(caches) - 1
+
   # calculate the Lth layer gradients
-  prev_AL = caches[L - 1][3]
-  dzL = 1. / m * (data - label)
-  dWL = np.dot(dzL, prev_AL.T)
-  dbL = np.sum(dzL, axis=1, keepdims=True)
-  gradients = {"dW" + str(L): dWL, "db" + str(L): dbL}
+  z = 1. / m * (pred - label)
+
+  _, w, b = linear_backward(z, caches[L])
+  gradients = {"dW" + str(L + 1): w, "db" + str(L + 1): b}
+
   # calculate from L-1 to 1 layer gradients
-  for l in reversed(range(1, L)):  # L-1,L-3,....,1
-    post_W = caches[l + 1][0]  # use later layer para W
-    dz = dzL  # use later layer para dz
+  for l in reversed(range(0, L)):  # L-1,L-3,....,1
+    _, _, _, z = caches[l]
+    # ReLu backward -> linear backward
+    # relu backward
+    out = relu_backward(z)
+    # linear backward
+    _, w, b = linear_backward(out, caches[l])
 
-    dal = np.dot(post_W.T, dz)
-    z = caches[l][2]  # use layer z
-    dzl = np.multiply(dal, relu_backward(z))
-    prev_A = caches[l - 1][3]  # user before layer para A
-    dWl = np.dot(dzl, prev_A.T)
-    dbl = np.sum(dzl, axis=1, keepdims=True)
+    gradients["dW" + str(l + 1)] = w
+    gradients["db" + str(l + 1)] = b
 
-    gradients["dW" + str(l)] = dWl
-    gradients["db" + str(l)] = dbl
-    dzL = dzl  # update para dz
   return gradients
 
 
@@ -164,7 +159,7 @@ def compute_loss(pred, label):
   return np.squeeze(loss)
 
 
-def update_parameters_with_sgd(parameters, grads, learning_rate):
+def update_parameters_with_sgd(paras, grads, learning_rate):
   """ update parameters using SGD
   ```
 	VdW = beta * VdW - learning_rate * dW
@@ -187,8 +182,9 @@ def update_parameters_with_sgd(parameters, grads, learning_rate):
   parameters:     python dictionary containing your updated parameters
 
   """
-  L = len(parameters) // 2
+  L = len(paras) // 2
   for l in range(L):
-    parameters["W" + str(l + 1)] = parameters["W" + str(l + 1)] - learning_rate * grads["dW" + str(l + 1)]
-    parameters["b" + str(l + 1)] = parameters["b" + str(l + 1)] - learning_rate * grads["db" + str(l + 1)]
-  return parameters
+    paras["W" + str(l + 1)] = paras["W" + str(l + 1)] - learning_rate * grads["dW" + str(l + 1)]
+    paras["b" + str(l + 1)] = paras["b" + str(l + 1)] - learning_rate * grads["db" + str(l + 1)]
+
+  return paras

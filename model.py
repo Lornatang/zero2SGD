@@ -14,7 +14,7 @@ def model(data,
           layer_dims,
           learning_rate,
           num_iterations,
-          mini_batch_size):
+          batch_size):
   """ define basic model
   Paras
   -----------------------------------
@@ -27,32 +27,32 @@ def model(data,
 
   Returns:
   -----------------------------------
-  parameters：      final parameters:(W,b)
+  paras：      final paras:(W,b)
   """
   costs = []
-  # initialize parameters
-  parameters = init_parameters(layer_dims)
+  # initialize paras
+  paras = init_paras(layer_dims)
   for i in range(0, num_iterations):
     # Define the random mini batches. We increment the seed to reshuffle differently the dataset after each epoch
-    mini_batches = random_mini_batches(data, label, mini_batch_size, seed=10)
+    mini_batches = random_mini_batches(data, label, batch_size)
     for mini_batch in mini_batches:
       # Select a mini_batch
       (mini_batch_X, mini_batch_Y) = mini_batch
       # Forward propagation
-      AL, caches = forward_propagation(mini_batch_X, parameters)
+      AL, caches = forward_propagation(mini_batch_X, paras)
       # Compute cost
       loss = compute_loss(AL, mini_batch_Y)
       # Backward propagation
       grads = backward_propagation(AL, mini_batch_Y, caches)
-      parameters = update_parameters_with_sgd(parameters, grads, learning_rate)
+      paras = update_parameters_with_sgd(paras, grads, learning_rate)
 
       print(f"Iter {i} loss {loss:.6f}")
       costs.append(loss)
 
-  return parameters
+  return paras
 
 
-def predict(data, label, parameters):
+def predict(data, label, paras):
   """predict function
   Paras
   -----------------------------------
@@ -65,7 +65,7 @@ def predict(data, label, parameters):
   accuracy:        the correct value of the prediction
   """
   pred = np.zeros((1, label.shape[1]))
-  prob, _ = forward_propagation(data, parameters)
+  prob, _ = forward_propagation(data, paras)
   for i in range(prob.shape[1]):
     # Convert probabilities A[0,i] to actual predictions p[0,i]
     if prob[0, i] > 0.5:
@@ -84,7 +84,7 @@ def dnn(X_train,
         layer_dims,
         learning_rate,
         num_iterations,
-        mini_batch_size):
+        batch_size):
   """DNN model
    Paras
   -----------------------------------
@@ -101,12 +101,12 @@ def dnn(X_train,
   -----------------------------------
   accuracy:        the correct value of the prediction
   """
-  parameters = model(X_train,
+  paras = model(X_train,
                      y_train,
                      layer_dims,
                      learning_rate,
                      num_iterations,
-                     mini_batch_size)
-  accuracy = predict(X_test, y_test, parameters)
+                     batch_size)
+  accuracy = predict(X_test, y_test, paras)
 
   return accuracy
