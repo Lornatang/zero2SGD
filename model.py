@@ -33,7 +33,7 @@ def model(data,
     global loss
     losses = []
     # initialize paras
-    paras = init_paras(layer_dims)
+    paras, bn_paras = init_paras(layer_dims)
     for i in range(0, iters):
       # Define the random mini batches. We increment the seed to reshuffle differently the dataset after each epoch
       batches = random_mini_batches(data, label, batch_size)
@@ -41,7 +41,7 @@ def model(data,
         # Select a batch
         (data, label) = batch
         # Forward propagation
-        pred, caches = forward_propagation(data, paras)
+        pred, caches, bn_paras = forward_propagation(data, paras, bn_paras)
         # Compute cost
         loss = compute_loss(pred, label)
         # Backward propagation
@@ -58,10 +58,10 @@ def model(data,
     plt.ylabel("loss")  # 纵坐标名字
     plt.show()
 
-    return paras
+    return paras, bn_paras
 
 
-def predict(data, label, paras):
+def predict(data, label, paras, bn_paras):
     """predict function
     Paras
     -----------------------------------
@@ -74,7 +74,7 @@ def predict(data, label, paras):
     accuracy:        the correct value of the prediction
     """
     pred = np.zeros((1, label.shape[1]))
-    prob, _ = forward_propagation(data, paras)
+    prob, _ = forward_propagation(data, paras, bn_paras)
     for i in range(prob.shape[1]):
         # Convert probabilities A[0,i] to actual predictions p[0,i]
         if prob[0, i] > 0.5:
@@ -109,11 +109,11 @@ def dnn(X_train,
     -----------------------------------
     accuracy:        the correct value of the prediction
     """
-    paras = model(X_train,
-                  y_train,
-                  layer_dims,
-                  learning_rate,
-                  num_iterations)
-    accuracy = predict(X_test, y_test, paras)
+    paras, bn_paras = model(X_train,
+                            y_train,
+                            layer_dims,
+                            learning_rate,
+                            num_iterations)
+    accuracy = predict(X_test, y_test, paras, bn_paras)
 
     return accuracy
