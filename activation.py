@@ -37,7 +37,7 @@ def linear_backward(x, cache):
   -----------------------------------
   cal wx + b
   """
-  A, W, b, z = cache
+  A, W, _, _, _, _, _ = cache
   dW = np.dot(x, A.T)
   db = np.sum(x, axis=1, keepdims=True)
   dx = np.dot(W.T, x)
