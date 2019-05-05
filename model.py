@@ -7,14 +7,14 @@
 ####################################################
 
 from ops import *
+from matplotlib import pyplot as plt
 
 
 def model(data,
           label,
           layer_dims,
           learning_rate,
-          num_iterations,
-          batch_size):
+          num_iterations):
     """ define basic model
     Paras
     -----------------------------------
@@ -33,25 +33,25 @@ def model(data,
     losses = []
     # initialize paras
     paras = init_paras(layer_dims)
-    iters = num_iterations // batch_size
-    for i in range(0, iters):
+    for i in range(0, num_iterations):
         # Define the random mini batches. We increment the seed to reshuffle differently the dataset after each epoch
-        mini_batches = random_mini_batches(data, label, batch_size)
-        for mini_batch in mini_batches:
-            # Select a mini_batch
-            (mini_batch_X, mini_batch_Y) = mini_batch
-            # Forward propagation
-            pred, caches = forward_propagation(mini_batch_X, paras)
-            # Compute cost
-            loss = compute_loss(pred, mini_batch_Y)
-            # Backward propagation
-            grads = backward_propagation(pred, mini_batch_Y, caches)
-            # update parameters
-            paras = update_parameters_with_sgd(paras, grads, learning_rate)
+        # Forward propagation
+        pred, caches = forward_propagation(data, paras)
+        # Compute cost
+        loss = compute_loss(pred, label)
+        # Backward propagation
+        grads = backward_propagation(pred, label, caches)
+        # update parameters
+        paras = update_parameters_with_sgd(paras, grads, learning_rate)
 
-        print(f"Iter {i * batch_size} loss {loss:.6f}")
-        losses.append(loss)
-
+        if i % 200 == 0:
+            print(f"Iter {i} loss {loss:.6f}")
+            losses.append(loss)
+    plt.clf()
+    plt.plot(losses)  # o-:圆形
+    plt.xlabel("iterations(thousand)")  # 横坐标名字
+    plt.ylabel("cost")  # 纵坐标名字
+    plt.show()
     return paras
 
 
@@ -86,8 +86,7 @@ def dnn(X_train,
         y_test,
         layer_dims,
         learning_rate,
-        num_iterations,
-        batch_size):
+        num_iterations):
     """DNN model
      Paras
     -----------------------------------
@@ -108,8 +107,7 @@ def dnn(X_train,
                   y_train,
                   layer_dims,
                   learning_rate,
-                  num_iterations,
-                  batch_size)
+                  num_iterations)
     accuracy = predict(X_test, y_test, paras)
 
     return accuracy
