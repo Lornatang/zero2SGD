@@ -87,20 +87,20 @@ def forward_propagation(x, paras):
   caches = []
   # calculate from 1 to L-1 layer
   for l in range(1, L):
-    w = paras["W" + str(l)]
+    W = paras["W" + str(l)]
     b = paras["b" + str(l)]
 
     # linear forward -> relu forward ->linear forward....
-    z = linear(A, w, b)
-    caches.append((A, w, b, z))
+    z = linear(A, W, b)
+    caches.append((A, W, b, z))
     A = relu(z)
 
   # calculate Lth layer
-  w = paras["W" + str(L)]
+  W = paras["W" + str(L)]
   b = paras["b" + str(L)]
 
-  z = linear(A, w, b)
-  caches.append((A, w, b, z))
+  z = linear(A, W, b)
+  caches.append((A, W, b, z))
   y = sigmoid(z)
 
   return y, caches
