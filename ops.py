@@ -19,31 +19,31 @@ def random_mini_batches(data, label, batch_size):
 
   Returns
   -----------------------------------
-  batches:    list of synchronous (mini_batch_X, mini_batch_Y)
+  batches:    list of synchronous (data, mini_batch_Y)
   """
   m = data.shape[1]  # number of training examples
   batches = []
 
   # Step 1: Shuffle (data, label)
   permutation = list(np.random.permutation(m))
-  shuffled_X = data[:, permutation]
-  shuffled_Y = label[:, permutation].reshape((1, m))
+  data = data[:, permutation]
+  label = label[:, permutation].reshape((1, m))
 
-  # Step 2: Partition (shuffled_X, shuffled_Y). Minus the end case.
+  # Step 2: Partition (data, label). Minus the end case.
   # number of mini batches of size mini_batch_size in your partitioning
   num_batches = m // batch_size
   for k in range(0, num_batches):
-    mini_batch_X = shuffled_X[:, k * batch_size: (k + 1) * batch_size]
-    mini_batch_Y = shuffled_Y[:, k * batch_size: (k + 1) * batch_size]
-    mini_batch = (mini_batch_X, mini_batch_Y)
-    batches.append(mini_batch)
+    data = data[:, k * batch_size: (k + 1) * batch_size]
+    label = label[:, k * batch_size: (k + 1) * batch_size]
+    batch = (data, label)
+    batches.append(batch)
 
   # Handling the end case (last mini-batch < mini_batch_size)
   if m % batch_size != 0:
-    mini_batch_X = shuffled_X[:, num_batches * batch_size: m]
-    mini_batch_Y = shuffled_Y[:, num_batches * batch_size: m]
-    mini_batch = (mini_batch_X, mini_batch_Y)
-    batches.append(mini_batch)
+    data = data[:, num_batches * batch_size: m]
+    label = label[:, num_batches * batch_size: m]
+    batch = (data, label)
+    batches.append(batch)
 
   return batches
 
@@ -60,14 +60,19 @@ def init_paras(layer_dims):
   """
   L = len(layer_dims)
   paras = {}
+  bn_paras = {}
   for l in range(1, L):
     paras["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1])
     paras["b" + str(l)] = np.zeros((layer_dims[l], 1))
+    paras["gamma" + str(l)] = np.ones((layer_dims[l], 1))
+    paras["beta" + str(l)] = np.zeros((layer_dims[l], 1))
+    bn_paras["moving_mean" + str(l)] = np.zeros((layer_dims[l], 1))
+    bn_paras["moving_var" + str(l)] = np.zeros((layer_dims[l], 1))
 
-  return paras
+  return paras, bn_paras
 
 
-def forward_propagation(x, paras):
+def forward_propagation(x, paras, bn_paras, decay=0.9):
   """ forward propagation function
   Paras
   ------------------------------------
@@ -76,24 +81,36 @@ def forward_propagation(x, paras):
   parameters: python dictionary containing your parameters "W1", "b1", "W2", "b2",...,"WL", "bL"
               W -- weight matrix of shape (size of current layer, size of previous layer)
               b -- bias vector of shape (size of current layer,1)
+              gamma -- scale vector of shape (size of current layer ,1)
+              beta -- offset vector of shape (size of current layer ,1)
+              decay -- the parameter of exponential weight average
+              moving_mean = decay * moving_mean + (1 - decay) * current_mean
+              moving_var = decay * moving_var + (1 - decay) * moving_var
+              the moving_mean and moving_var are used for test
 
   Returns
   ------------------------------------
   y:          the output of the last Layer(y_predict)
   caches:     list, every element is a tuple:(W,b,z,A_pre)
   """
-  L = len(paras) // 2  # number of layer
+  L = len(paras) // 4  # number of layer
   A = x
   caches = []
   # calculate from 1 to L-1 layer
   for l in range(1, L):
     W = paras["W" + str(l)]
     b = paras["b" + str(l)]
+    gamma = paras["gamma" + str(l)]
+    beta = paras["beta" + str(l)]
 
     # linear forward -> relu forward ->linear forward....
     z = linear(A, W, b)
-    caches.append((A, W, b, z))
+    z_out, mu, var, z_norm, sqrt_var = batch_norm(z, gamma, beta)  # batch normalization
+    caches.append((A, W, b, gamma, sqrt_var, z_out, z_norm))
     A = relu(z)
+
+    bn_paras["moving_mean" + str(l)] = decay * bn_paras["moving_mean" + str(l)] + (1 - decay) * mu
+    bn_paras["moving_var" + str(l)] = decay * bn_paras["moving_var" + str(l)] + (1 - decay) * var
 
   # calculate Lth layer
   W = paras["W" + str(L)]
@@ -103,7 +120,7 @@ def forward_propagation(x, paras):
   caches.append((A, W, b, z))
   y = sigmoid(z)
 
-  return y, caches
+  return y, caches, bn_paras
 
 
 def backward_propagation(pred, label, caches):
@@ -120,24 +137,30 @@ def backward_propagation(pred, label, caches):
   """
   m = label.shape[1]
   L = len(caches) - 1
-
+  # print("L:   " + str(L))
   # calculate the Lth layer gradients
-  z = 1. / m * (pred - label)
-
-  _, w, b = linear_backward(z, caches[L])
-  gradients = {"dW" + str(L + 1): w, "db" + str(L + 1): b}
-
+  dz = 1. / m * (pred - label)
+  da, dWL, dbL = linear_backward(dz, caches[L])
+  gradients = {"dW" + str(L + 1): dWL, "db" + str(L + 1): dbL}
   # calculate from L-1 to 1 layer gradients
   for l in reversed(range(0, L)):  # L-1,L-3,....,1
-    _, _, _, z = caches[l]
-    # ReLu backward -> linear backward
+    # relu_backward->batchnorm_backward->linear backward
+    A, w, b, gamma, sqrt_var, z_out, z_norm = caches[l]
     # relu backward
-    out = relu_backward(z)
+    dout = relu_backward(z_out)
+    # batch normalization
+    dgamma, dbeta, dz = batch_norm_backward(dout, caches[l])
+    # print("===============dz" + str(l+1) + "===================")
+    # print(dz.shape)
     # linear backward
-    _, w, b = linear_backward(out, caches[l])
-
-    gradients["dW" + str(l + 1)] = w
-    gradients["db" + str(l + 1)] = b
+    da, dW, db = linear_backward(dz, caches[l])
+    # print("===============dw"+ str(l+1) +"=============")
+    # print(dW.shape)
+    # gradient
+    gradients["dW" + str(l + 1)] = dW
+    gradients["db" + str(l + 1)] = db
+    gradients["dgamma" + str(l + 1)] = dgamma
+    gradients["dbeta" + str(l + 1)] = dbeta
 
   return gradients
 
