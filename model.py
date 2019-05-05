@@ -114,6 +114,8 @@ def dnn(X_train,
                             layer_dims,
                             learning_rate,
                             num_iterations)
-    accuracy = predict(X_test, y_test, paras, bn_paras)
 
-    return accuracy
+    train_accuracy = predict(X_train, y_train, paras, bn_paras)
+    test_accuracy = predict(X_test, y_test, paras, bn_paras)
+
+    return train_accuracy, test_accuracy
