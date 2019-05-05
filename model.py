@@ -14,7 +14,8 @@ def model(data,
           label,
           layer_dims,
           learning_rate,
-          num_iterations):
+          iters,
+          batch_size=64):
     """ define basic model
     Paras
     -----------------------------------
@@ -33,8 +34,12 @@ def model(data,
     losses = []
     # initialize paras
     paras = init_paras(layer_dims)
-    for i in range(0, num_iterations):
-        # Define the random mini batches. We increment the seed to reshuffle differently the dataset after each epoch
+    for i in range(0, iters):
+      # Define the random mini batches. We increment the seed to reshuffle differently the dataset after each epoch
+      batches = random_mini_batches(data, label, batch_size)
+      for batch in batches:
+        # Select a batch
+        (data, label) = batch
         # Forward propagation
         pred, caches = forward_propagation(data, paras)
         # Compute cost
@@ -44,14 +49,15 @@ def model(data,
         # update parameters
         paras = update_parameters_with_sgd(paras, grads, learning_rate)
 
-        if i % 200 == 0:
-            print(f"Iter {i} loss {loss:.6f}")
-            losses.append(loss)
+      if i % 200 == 0:
+        print(f"Iter {i} loss {loss:.6f}")
+        losses.append(loss)
     plt.clf()
     plt.plot(losses)  # o-:圆形
     plt.xlabel("iterations(thousand)")  # 横坐标名字
-    plt.ylabel("cost")  # 纵坐标名字
+    plt.ylabel("loss")  # 纵坐标名字
     plt.show()
+
     return paras
 
 
