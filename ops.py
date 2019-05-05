@@ -117,7 +117,7 @@ def forward_propagation(x, paras, bn_paras, decay=0.9):
   b = paras["b" + str(L)]
 
   z = linear(A, W, b)
-  caches.append((A, W, b, z))
+  caches.append((A, W, b, None, None, None, None))
   y = sigmoid(z)
 
   return y, caches, bn_paras
@@ -150,12 +150,8 @@ def backward_propagation(pred, label, caches):
     dout = relu_backward(z_out)
     # batch normalization
     dgamma, dbeta, dz = batch_norm_backward(dout, caches[l])
-    # print("===============dz" + str(l+1) + "===================")
-    # print(dz.shape)
     # linear backward
     da, dW, db = linear_backward(dz, caches[l])
-    # print("===============dw"+ str(l+1) +"=============")
-    # print(dW.shape)
     # gradient
     gradients["dW" + str(l + 1)] = dW
     gradients["db" + str(l + 1)] = db
@@ -205,9 +201,11 @@ def update_parameters_with_sgd(paras, grads, learning_rate):
   parameters:     python dictionary containing your updated parameters
 
   """
-  L = len(paras) // 2
+  L = len(paras) // 4
   for l in range(L):
     paras["W" + str(l + 1)] = paras["W" + str(l + 1)] - learning_rate * grads["dW" + str(l + 1)]
     paras["b" + str(l + 1)] = paras["b" + str(l + 1)] - learning_rate * grads["db" + str(l + 1)]
-
+    if l < L - 1:
+      paras["gamma" + str(l + 1)] = paras["gamma" + str(l + 1)] - learning_rate * grads["dgamma" + str(l + 1)]
+      paras["beta" + str(l + 1)] = paras["beta" + str(l + 1)] - learning_rate * grads["dbeta" + str(l + 1)]
   return paras
