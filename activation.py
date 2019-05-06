@@ -59,7 +59,7 @@ def relu(x):
   return np.maximum(0, x)
 
 
-def relu_backward(x):
+def relu_backward(dx, x):
   """ derivation of relu
   Paras
   -----------------------------------
@@ -70,7 +70,7 @@ def relu_backward(x):
   max of nums
   """
 
-  return np.multiply(1., np.int64(x > 0))
+  return np.multiply(dx, np.int64(x > 0))
 
 
 def sigmoid(x):
