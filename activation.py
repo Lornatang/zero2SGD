@@ -154,11 +154,19 @@ def batch_norm(x, gamma, beta, epsilon=1e-12):
   return mean, var, sqrt_var, normalized, out
 
 
-def batch_norm_backward(dout, cache):
+def batch_norm_backward(dx, cache):
+  """ derivation of batch_norm
+  Paras
+  -----------------------------------
+  dx: output of the linear layer
+
+  Returns
+  -----------------------------------
+  """
   _, _, _, gamma, sqrt_var, normalized, _ = cache
-  m = dout.shape[1]
-  dgamma = np.sum(dout * normalized, axis=1, keepdims=True)
-  dbeta = np.sum(dout, axis=1, keepdims=True)
-  dx = 1. / m * gamma * sqrt_var * (
-            m * dout - np.sum(dout, axis=1, keepdims=True) - normalized * np.sum(dout * normalized, axis=1, keepdims=True))
-  return dgamma, dbeta, dx
+  m = dx.shape[1]
+  dgamma = np.sum(dx * normalized, axis=1, keepdims=True)
+  dbeta = np.sum(dx, axis=1, keepdims=True)
+  dout = 1. / m * gamma * sqrt_var * (
+          m * dx - np.sum(dx, axis=1, keepdims=True) - normalized * np.sum(dx * normalized, axis=1, keepdims=True))
+  return dgamma, dbeta, dout
