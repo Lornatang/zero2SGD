@@ -130,33 +130,34 @@ def tanh_backward(x):
   return 1 - favl ** 2
 
 
-# def batch_norm(x, gamma, beta, epsilon=1e-12):
-#   """
-#   Paras
-#   -----------------------------------
-#   x:       the input of activation (x = np.dot(W,A_pre) + b)
-#   gamma:   ...
-#   beta:    ...
-#   epsilon: is a constant for denominator is 0
-#
-#   Returns
-#   -----------------------------------
-#   z_out, mean, variance
-#   """
-#   mu = np.mean(x, axis=1, keepdims=True)
-#   var = np.var(x, axis=1, keepdims=True)
-#   sqrt_var = np.sqrt(var + epsilon)
-#   z_norm = (x - mu) / sqrt_var
-#   z_out = np.multiply(gamma, z_norm) + beta
-#
-#   return z_out, mu, var, z_norm, sqrt_var
-#
-#
-# def batch_norm_backward(dout, cache):
-#   _, _, _, gamma, sqrt_var, _, Z_norm = cache
-#   m = dout.shape[1]
-#   dgamma = np.sum(dout * Z_norm, axis=1, keepdims=True)
-#   dbeta = np.sum(dout, axis=1, keepdims=True)
-#   dy = 1. / m * gamma * sqrt_var * (
-#             m * dout - np.sum(dout, axis=1, keepdims=True) - Z_norm * np.sum(dout * Z_norm, axis=1, keepdims=True))
-#   return dgamma, dbeta, dy
+def batch_norm(x, gamma, beta, epsilon=1e-12):
+  """
+  Paras
+  -----------------------------------
+  x:       the input of activation (x = np.dot(x, W) + b)
+  gamma:   zoom factor
+  beta:    translation factor
+  epsilon: is a constant for denominator is 0
+
+  Returns
+  -----------------------------------
+  z_out, mean, variance
+  """
+  x_mean = np.mean(x, axis=1, keepdims=True)  # cal x mean
+  x_var = np.var(x, axis=1, keepdims=True)  # cal x var
+
+  normalized = (x - x_mean) / np.sqrt(x_var + epsilon)  # normalized
+
+  # scale and shift variables are introduced to calculate the normalized value
+  out = np.multiply(gamma, normalized) + beta
+  return x_mean, x_var, normalized, out
+
+
+def batch_norm_backward(dout, cache):
+  _, _, _, gamma, sqrt_var, _, Z_norm = cache
+  m = dout.shape[1]
+  dgamma = np.sum(dout * Z_norm, axis=1, keepdims=True)
+  dbeta = np.sum(dout, axis=1, keepdims=True)
+  dy = 1. / m * gamma * sqrt_var * (
+            m * dout - np.sum(dout, axis=1, keepdims=True) - Z_norm * np.sum(dout * Z_norm, axis=1, keepdims=True))
+  return dgamma, dbeta, dy
