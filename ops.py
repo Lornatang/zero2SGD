@@ -89,7 +89,6 @@ def forward_propagation(x, paras):
   caches:     list, every element is a tuple:(W,b,z,A_pre)
   """
   L = len(paras) // 2  # number of layer
-  A = x
   caches = []
   # calculate from 1 to L-1 layer
   for l in range(1, L):
@@ -97,16 +96,16 @@ def forward_propagation(x, paras):
     b = paras["b" + str(l)]
 
     # linear forward -> relu forward ->linear forward....
-    z = linear(A, W, b)
-    caches.append((A, W, b, z))
-    A = relu(z)
+    z = linear(x, W, b)
+    caches.append((x, W, b, z))
+    x = relu(z)
 
   # calculate Lth layer
   W = paras["W" + str(L)]
   b = paras["b" + str(L)]
 
-  z = linear(A, W, b)
-  caches.append((A, W, b, z))
+  z = linear(x, W, b)
+  caches.append((x, W, b, z))
   y = sigmoid(z)
 
   return y, caches
@@ -128,23 +127,23 @@ def backward_propagation(pred, label, caches):
   L = len(caches) - 1
 
   # calculate the Lth layer gradients
-  dz = 1. / batch_size * (pred - label)
-  da, dWL, dbL = linear_backward(dz, caches[L])
-  gradients = {"dW" + str(L + 1): dWL, "db" + str(L + 1): dbL}
+  z = 1. / batch_size * (pred - label)
+  x, W, b = linear_backward(z, caches[L])
+  grads = {"dW" + str(L + 1): W, "db" + str(L + 1): b}
 
   # calculate from L-1 to 1 layer gradients
   for l in reversed(range(0, L)):  # L-1,L-3,....,0
-    A, W, b, z = caches[l]
+    _, _, _, z = caches[l]
     # ReLu backward -> linear backward
     # relu backward
-    dout = relu_backward(da, z)
+    out = relu_backward(x, z)
     # linear backward
-    da, dW, db = linear_backward(dout, caches[l])
+    x, dW, db = linear_backward(out, caches[l])
 
-    gradients["dW" + str(l + 1)] = dW
-    gradients["db" + str(l + 1)] = db
+    grads["dW" + str(l + 1)] = dW
+    grads["db" + str(l + 1)] = db
 
-  return gradients
+  return grads
 
 
 def compute_loss(pred, label):
