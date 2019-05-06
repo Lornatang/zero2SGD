@@ -137,7 +137,7 @@ def backward_propagation(pred, label, caches):
     A, W, b, z = caches[l]
     # ReLu backward -> linear backward
     # relu backward
-    dout = relu_backward(z)
+    dout = relu_backward(da, z)
     # linear backward
     da, dW, db = linear_backward(dout, caches[l])
 
