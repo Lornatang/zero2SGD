@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 def model(data,
           label,
           layer_dims,
-          learning_rate,
+          lr,
           iters):
   """ define basic model
   Paras
@@ -44,7 +44,7 @@ def model(data,
     # Backward propagation
     grads = backward_propagation(pred, label, caches)
     # update parameters
-    paras = update_parameters_with_sgd(paras, grads, learning_rate)
+    paras = update_parameters_with_sgd(paras, grads, lr)
 
   plt.clf()
   plt.plot(losses)
