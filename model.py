@@ -47,9 +47,9 @@ def model(data,
     paras = update_parameters_with_sgd(paras, grads, learning_rate)
 
   plt.clf()
-  plt.plot(losses)  # o-:圆形
-  plt.xlabel("iterations(thousand)")  # 横坐标名字
-  plt.ylabel("loss")  # 纵坐标名字
+  plt.plot(losses)
+  plt.xlabel("iterations(thousand)")
+  plt.ylabel("loss")
   plt.show()
 
   return paras
