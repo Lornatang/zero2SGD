@@ -33,7 +33,7 @@ def model(data,
   losses = []
   # initialize paras
   paras, bn_paras = init_paras(layer_dims)
-  for i in range(0, iters):
+  for i in range(1, iters+1):
     # Forward propagation
     pred, caches, bn_paras = forward_propagation(data, paras, bn_paras)
     # Compute cost
