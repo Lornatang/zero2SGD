@@ -60,55 +60,63 @@ def init_paras(layer_dims):
   """
   L = len(layer_dims)
   paras = {}
+  bn_paras = {}
   for l in range(1, L):
     paras["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l - 1]) * 0.1
     paras["b" + str(l)] = np.zeros((layer_dims[l], 1))
+    paras["gamma" + str(l)] = np.ones((layer_dims[l], 1))
+    paras["beta" + str(l)] = np.zeros((layer_dims[l], 1))
+    bn_paras["moving_mean" + str(l)] = np.zeros((layer_dims[l], 1))
+    bn_paras["moving_var" + str(l)] = np.zeros((layer_dims[l], 1))
 
-  return paras
+  return paras, bn_paras
 
 
-def forward_propagation(x, paras):
+def forward_propagation(x, paras, bn_paras, decay=0.9):
   """ forward propagation function
   Paras
   ------------------------------------
-  x:          input dataset, of shape (input size, number of examples)
+  x:           input dataset, of shape (input size, number of examples)
 
-  parameters: python dictionary containing your parameters "W1", "b1", "W2", "b2",...,"WL", "bL"
-              W -- weight matrix of shape (size of current layer, size of previous layer)
-              b -- bias vector of shape (size of current layer,1)
-              gamma -- scale vector of shape (size of current layer ,1)
-              beta -- offset vector of shape (size of current layer ,1)
-              decay -- the parameter of exponential weight average
-              moving_mean = decay * moving_mean + (1 - decay) * current_mean
-              moving_var = decay * moving_var + (1 - decay) * moving_var
-              the moving_mean and moving_var are used for test
+  W:           weight matrix of shape (size of current layer, size of previous layer)
+  b:           bias vector of shape (size of current layer,1)
+  gamma:       scale vector of shape (size of current layer ,1)
+  beta:        offset vector of shape (size of current layer ,1)
+  decay:       the parameter of exponential weight average
+  moving_mean: decay * moving_mean + (1 - decay) * current_mean
+  moving_var:  decay * moving_var + (1 - decay) * moving_var
 
   Returns
   ------------------------------------
   y:          the output of the last Layer(y_predict)
   caches:     list, every element is a tuple:(W,b,z,A_pre)
   """
-  L = len(paras) // 2  # number of layer
+  L = len(paras) // 4  # number of layer
   caches = []
   # calculate from 1 to L-1 layer
   for l in range(1, L):
     W = paras["W" + str(l)]
     b = paras["b" + str(l)]
+    gamma = paras["gamma" + str(l)]
+    beta = paras["beta" + str(l)]
 
     # linear forward -> relu forward ->linear forward....
     z = linear(x, W, b)
-    caches.append((x, W, b, z))
-    x = relu(z)
+    mean, var, sqrt_var, normalized, out = batch_norm(z, gamma, beta)
+    caches.append((x, W, b, gamma, sqrt_var, normalized, out))
+    x = relu(out)
+    bn_paras["moving_mean" + str(l)] = decay * bn_paras["moving_mean" + str(l)] + (1 - decay) * mean
+    bn_paras["moving_var" + str(l)] = decay * bn_paras["moving_var" + str(l)] + (1 - decay) * var
 
   # calculate Lth layer
   W = paras["W" + str(L)]
   b = paras["b" + str(L)]
 
   z = linear(x, W, b)
-  caches.append((x, W, b, z))
+  caches.append((x, W, b, None, None, None, None))
   y = sigmoid(z)
 
-  return y, caches
+  return y, caches, bn_paras
 
 
 def backward_propagation(pred, label, caches):
@@ -133,15 +141,19 @@ def backward_propagation(pred, label, caches):
 
   # calculate from L-1 to 1 layer gradients
   for l in reversed(range(0, L)):  # L-1,L-3,....,0
-    _, _, _, z = caches[l]
-    # ReLu backward -> linear backward
+    # relu_backward->batch_norm_backward->linear backward
+    _, W, b, gamma, sqrt_var, normalized, out = caches[l]
     # relu backward
-    out = relu_backward(x, z)
+    out = relu_backward(x, out)
+    # batch normalization
+    dgamma, dbeta, dx = batch_norm_backward(out, caches[l])
     # linear backward
-    x, dW, db = linear_backward(out, caches[l])
+    x, dW, db = linear_backward(dx, caches[l])
 
     grads["dW" + str(l + 1)] = dW
     grads["db" + str(l + 1)] = db
+    grads["dgamma" + str(l + 1)] = dgamma
+    grads["dbeta" + str(l + 1)] = dbeta
 
   return grads
 
@@ -188,9 +200,12 @@ def update_parameters_with_sgd(paras, grads, learning_rate):
   parameters:     python dictionary containing your updated parameters
 
   """
-  L = len(paras) // 2
+  L = len(paras) // 4
   for l in range(L):
     paras["W" + str(l + 1)] = paras["W" + str(l + 1)] - learning_rate * grads["dW" + str(l + 1)]
     paras["b" + str(l + 1)] = paras["b" + str(l + 1)] - learning_rate * grads["db" + str(l + 1)]
+    if l < L - 1:
+      paras["gamma" + str(l + 1)] = paras["gamma" + str(l + 1)] - learning_rate * grads["dgamma" + str(l + 1)]
+      paras["beta" + str(l + 1)] = paras["beta" + str(l + 1)] - learning_rate * grads["dbeta" + str(l + 1)]
 
   return paras

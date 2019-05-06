@@ -37,7 +37,7 @@ def linear_backward(dx, cache):
   -----------------------------------
   cal wx + b
   """
-  x, W, _, _ = cache
+  x, W, _, _, _, _, _ = cache
   dW = np.dot(dx, x.T)
   db = np.sum(dx, axis=1, keepdims=True)
   dx = np.dot(W.T, dx)
@@ -143,21 +143,22 @@ def batch_norm(x, gamma, beta, epsilon=1e-12):
   -----------------------------------
   z_out, mean, variance
   """
-  x_mean = np.mean(x, axis=1, keepdims=True)  # cal x mean
-  x_var = np.var(x, axis=1, keepdims=True)  # cal x var
+  mean = np.mean(x, axis=1, keepdims=True)  # cal x mean
+  var = np.var(x, axis=1, keepdims=True)  # cal x var
+  sqrt_var = np.sqrt(var + epsilon)
 
-  normalized = (x - x_mean) / np.sqrt(x_var + epsilon)  # normalized
+  normalized = (x - mean) / sqrt_var  # normalized
 
   # scale and shift variables are introduced to calculate the normalized value
   out = np.multiply(gamma, normalized) + beta
-  return x_mean, x_var, normalized, out
+  return mean, var, sqrt_var, normalized, out
 
 
 def batch_norm_backward(dout, cache):
-  _, _, _, gamma, sqrt_var, _, Z_norm = cache
+  _, _, _, gamma, sqrt_var, normalized, _ = cache
   m = dout.shape[1]
-  dgamma = np.sum(dout * Z_norm, axis=1, keepdims=True)
+  dgamma = np.sum(dout * normalized, axis=1, keepdims=True)
   dbeta = np.sum(dout, axis=1, keepdims=True)
-  dy = 1. / m * gamma * sqrt_var * (
-            m * dout - np.sum(dout, axis=1, keepdims=True) - Z_norm * np.sum(dout * Z_norm, axis=1, keepdims=True))
-  return dgamma, dbeta, dy
+  dx = 1. / m * gamma * sqrt_var * (
+            m * dout - np.sum(dout, axis=1, keepdims=True) - normalized * np.sum(dout * normalized, axis=1, keepdims=True))
+  return dgamma, dbeta, dx
