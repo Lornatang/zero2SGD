@@ -60,19 +60,14 @@ def init_paras(layer_dims):
   """
   L = len(layer_dims)
   paras = {}
-  bn_paras = {}
   for l in range(1, L):
-    paras["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l-1])
+    paras["W" + str(l)] = np.random.randn(layer_dims[l], layer_dims[l - 1]) * 0.1
     paras["b" + str(l)] = np.zeros((layer_dims[l], 1))
-    paras["gamma" + str(l)] = np.ones((layer_dims[l], 1))
-    paras["beta" + str(l)] = np.zeros((layer_dims[l], 1))
-    bn_paras["moving_mean" + str(l)] = np.zeros((layer_dims[l], 1))
-    bn_paras["moving_var" + str(l)] = np.zeros((layer_dims[l], 1))
 
-  return paras, bn_paras
+  return paras
 
 
-def forward_propagation(x, paras, bn_paras, decay=0.9):
+def forward_propagation(x, paras):
   """ forward propagation function
   Paras
   ------------------------------------
@@ -93,34 +88,28 @@ def forward_propagation(x, paras, bn_paras, decay=0.9):
   y:          the output of the last Layer(y_predict)
   caches:     list, every element is a tuple:(W,b,z,A_pre)
   """
-  L = len(paras) // 4  # number of layer
+  L = len(paras) // 2  # number of layer
   A = x
   caches = []
   # calculate from 1 to L-1 layer
   for l in range(1, L):
     W = paras["W" + str(l)]
     b = paras["b" + str(l)]
-    gamma = paras["gamma" + str(l)]
-    beta = paras["beta" + str(l)]
 
     # linear forward -> relu forward ->linear forward....
     z = linear(A, W, b)
-    z_out, mu, var, z_norm, sqrt_var = batch_norm(z, gamma, beta)  # batch normalization
-    caches.append((A, W, b, gamma, sqrt_var, z_out, z_norm))
+    caches.append((A, W, b, z))
     A = relu(z)
-
-    bn_paras["moving_mean" + str(l)] = decay * bn_paras["moving_mean" + str(l)] + (1 - decay) * mu
-    bn_paras["moving_var" + str(l)] = decay * bn_paras["moving_var" + str(l)] + (1 - decay) * var
 
   # calculate Lth layer
   W = paras["W" + str(L)]
   b = paras["b" + str(L)]
 
   z = linear(A, W, b)
-  caches.append((A, W, b, None, None, None, None))
+  caches.append((A, W, b, z))
   y = sigmoid(z)
 
-  return y, caches, bn_paras
+  return y, caches
 
 
 def backward_propagation(pred, label, caches):
@@ -135,28 +124,25 @@ def backward_propagation(pred, label, caches):
   ------------------------------------
   gradients -- A dictionary with the gradients with respect to dW,db
   """
-  m = label.shape[1]
+  batch_size = pred.shape[1]
   L = len(caches) - 1
-  # print("L:   " + str(L))
+
   # calculate the Lth layer gradients
-  dz = 1. / m * (pred - label)
+  dz = 1. / batch_size * (pred - label)
   da, dWL, dbL = linear_backward(dz, caches[L])
   gradients = {"dW" + str(L + 1): dWL, "db" + str(L + 1): dbL}
+
   # calculate from L-1 to 1 layer gradients
-  for l in reversed(range(0, L)):  # L-1,L-3,....,1
-    # relu_backward->batchnorm_backward->linear backward
-    A, w, b, gamma, sqrt_var, z_out, z_norm = caches[l]
+  for l in reversed(range(0, L)):  # L-1,L-3,....,0
+    A, W, b, z = caches[l]
+    # ReLu backward -> linear backward
     # relu backward
-    dout = relu_backward(z_out)
-    # batch normalization
-    dgamma, dbeta, dz = batch_norm_backward(dout, caches[l])
+    dout = relu_backward(z)
     # linear backward
-    da, dW, db = linear_backward(dz, caches[l])
-    # gradient
+    da, dW, db = linear_backward(dout, caches[l])
+
     gradients["dW" + str(l + 1)] = dW
     gradients["db" + str(l + 1)] = db
-    gradients["dgamma" + str(l + 1)] = dgamma
-    gradients["dbeta" + str(l + 1)] = dbeta
 
   return gradients
 
@@ -173,7 +159,9 @@ def compute_loss(pred, label):
   ------------------------------------
   loss:  the difference between the true and predicted values
   """
-  loss = 1. / label.shape[1] * np.nansum(np.multiply(-np.log(pred), label) + np.multiply(-np.log(1 - pred), 1 - label))
+  batch_size = label.shape[1]
+  loss = 1. / batch_size * np.nansum(np.multiply(-np.log(pred), label) +
+                                     np.multiply(-np.log(1 - pred), 1 - label))
 
   return np.squeeze(loss)
 
@@ -201,11 +189,9 @@ def update_parameters_with_sgd(paras, grads, learning_rate):
   parameters:     python dictionary containing your updated parameters
 
   """
-  L = len(paras) // 4
+  L = len(paras) // 2
   for l in range(L):
     paras["W" + str(l + 1)] = paras["W" + str(l + 1)] - learning_rate * grads["dW" + str(l + 1)]
     paras["b" + str(l + 1)] = paras["b" + str(l + 1)] - learning_rate * grads["db" + str(l + 1)]
-    if l < L - 1:
-      paras["gamma" + str(l + 1)] = paras["gamma" + str(l + 1)] - learning_rate * grads["dgamma" + str(l + 1)]
-      paras["beta" + str(l + 1)] = paras["beta" + str(l + 1)] - learning_rate * grads["dbeta" + str(l + 1)]
+
   return paras
