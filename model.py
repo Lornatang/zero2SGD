@@ -90,7 +90,7 @@ def dnn(X_train,
         layer_dims,
         learning_rate,
         iters):
-  """DNN model
+  """ DNN model
    Paras
   -----------------------------------
   X_train:         train data, of shape (input size, number of examples)
