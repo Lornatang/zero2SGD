@@ -25,7 +25,7 @@ def linear(x, w, b):
   return np.dot(w, x) + b
 
 
-def linear_backward(x, cache):
+def linear_backward(dx, cache):
   """
   Paras
   -----------------------------------
@@ -37,10 +37,10 @@ def linear_backward(x, cache):
   -----------------------------------
   cal wx + b
   """
-  A, W, _, _ = cache
-  dW = np.dot(x, A.T)
-  db = np.sum(x, axis=1, keepdims=True)
-  dx = np.dot(W.T, x)
+  x, W, _, _ = cache
+  dW = np.dot(dx, x.T)
+  db = np.sum(dx, axis=1, keepdims=True)
+  dx = np.dot(W.T, dx)
 
   return dx, dW, db
 
