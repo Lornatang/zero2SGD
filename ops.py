@@ -131,7 +131,7 @@ def backward_propagation(pred, label, caches):
   ------------------------------------
   gradients -- A dictionary with the gradients with respect to dW,db
   """
-  batch_size = pred.shape[1]
+  batch_size = label.shape[1]
   L = len(caches) - 1
 
   # calculate the Lth layer gradients
@@ -170,6 +170,7 @@ def compute_loss(pred, label):
   ------------------------------------
   loss:  the difference between the true and predicted values
   """
+
   batch_size = label.shape[1]
   loss = 1. / batch_size * np.nansum(np.multiply(-np.log(pred), label) +
                                      np.multiply(-np.log(1 - pred), 1 - label))
