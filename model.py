@@ -38,13 +38,15 @@ def model(data,
     pred, caches, bn_paras = forward_propagation(data, paras, bn_paras)
     # Compute cost
     loss = compute_loss(pred, label)
-    if i % 1000 == 0:
-      print(f"Iter {i} loss {loss:.6f}")
-      losses.append(loss)
+
     # Backward propagation
     grads = backward_propagation(pred, label, caches)
     # update parameters
     paras = update_parameters_with_sgd(paras, grads, lr)
+
+    if i % 1000 == 0:
+      print(f"Iter {i} loss {loss:.6f}")
+      losses.append(loss)
 
   plt.clf()
   plt.plot(losses)
