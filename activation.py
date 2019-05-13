@@ -109,7 +109,6 @@ def tanh(x):
 
   Returns
   -----------------------------------
-  max of nums
   """
 
   return (1 - np.exp(2 * -x)) / (1 + np.exp(2 * -x))
@@ -123,7 +122,6 @@ def tanh_backward(x):
 
   Returns
   -----------------------------------
-  max of nums
   """
   favl = tanh(x)
 
