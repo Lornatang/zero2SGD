@@ -29,3 +29,6 @@ accuracy = dnn(X_train,
                iters=10000)
 
 print(f"Acc: {accuracy}")
+
+
+### Write your own paper to refresh yourself.
