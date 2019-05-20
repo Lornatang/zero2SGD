@@ -97,7 +97,7 @@ def dnn(X_train,
 
   Returns
   -----------------------------------
-  accuracy:        the correct value of the prediction
+  acc:        the correct value of the prediction
   """
   paras, bn_paras = model(X_train,
                           y_train,
@@ -105,6 +105,6 @@ def dnn(X_train,
                           learning_rate,
                           iters)
 
-  accuracy = predict(X_test, y_test, paras, bn_paras)
+  acc = predict(X_test, y_test, paras, bn_paras)
 
-  return accuracy
+  return acc
